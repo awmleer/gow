@@ -59,8 +59,21 @@ func handleConnection(conn net.Conn) {
 		rw.WriteString("HTTP/1.1 200 OK\r\n")
 		data, _ := ioutil.ReadFile(servePath + uri)
 		contentLength := len(data)
-		rw.WriteString("Content-Type: text/html\r\n")
 		rw.WriteString("Content-Length: " + string(contentLength) + "\r\n")
+		uriParts := strings.Split(uri, ".")
+		fileExtention := uriParts[len(uriParts)-1]
+		var contentType string
+		switch fileExtention {
+		case "html":
+			contentType = "text/html"
+		case "jpg":
+			contentType = "image/jpeg"
+		case "txt":
+			contentType = "text/plain"
+		default:
+			contentType = "text/plain"
+		}
+		rw.WriteString("Content-Type: " + contentType + "\r\n")
 		rw.WriteString("\r\n")
 		rw.Write(data)
 		rw.Flush()
