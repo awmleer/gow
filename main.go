@@ -56,32 +56,35 @@ func handleConnection(conn net.Conn) {
 		}
 	}
 	if method == "GET" {
-		rw.WriteString("HTTP/1.1 200 OK\r\n")
-		data, _ := ioutil.ReadFile(servePath + uri)
-		contentLength := len(data)
-		rw.WriteString("Content-Length: " + string(contentLength) + "\r\n")
-		uriParts := strings.Split(uri, ".")
-		fileExtention := uriParts[len(uriParts)-1]
-		var contentType string
-		switch fileExtention {
-		case "html":
-			contentType = "text/html"
-		case "jpg":
-			contentType = "image/jpeg"
-		case "txt":
-			contentType = "text/plain"
-		default:
-			contentType = "text/plain"
+		data, err := ioutil.ReadFile(servePath + uri)
+		if err != nil {
+			rw.WriteString("HTTP/1.1 404 NOT FOUND\r\n")
+			rw.WriteString("Content-Length: 35\r\n")
+			rw.WriteString("Content-Type: text/html\r\n")
+			rw.WriteString("\r\n")
+			rw.WriteString("<html><body>Not Found</body></html>")
+		} else {
+			rw.WriteString("HTTP/1.1 200 OK\r\n")
+			contentLength := len(data)
+			rw.WriteString("Content-Length: " + string(contentLength) + "\r\n")
+			uriParts := strings.Split(uri, ".")
+			fileExtention := uriParts[len(uriParts)-1]
+			var contentType string
+			switch fileExtention {
+			case "html":
+				contentType = "text/html"
+			case "jpg":
+				contentType = "image/jpeg"
+			case "txt":
+				contentType = "text/plain"
+			default:
+				contentType = "text/plain"
+			}
+			rw.WriteString("Content-Type: " + contentType + "\r\n")
+			rw.WriteString("\r\n")
+			rw.Write(data)
 		}
-		rw.WriteString("Content-Type: " + contentType + "\r\n")
-		rw.WriteString("\r\n")
-		rw.Write(data)
 		rw.Flush()
 	}
 	conn.Close()
-
-	//// sample process for string received
-	//newMessage := strings.ToUpper(message)
-	//// send new string back to client
-	//conn.Write([]byte(newMessage + "\n"))
 }
