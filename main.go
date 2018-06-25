@@ -6,13 +6,25 @@ import (
 	"fmt"
 	"strings"
 	"io/ioutil"
+	"os"
 )
+
+var servePath string
 
 func main() {
 	ln, err := net.Listen("tcp", ":4785")
 	if err != nil {
 		// handle error
 	}
+	if len(os.Args) < 2 {
+		fmt.Println("Please input a directory to serve.")
+		return
+	}
+	servePath = os.Args[1]
+	if servePath[len(servePath)-1:] == "/" {
+		servePath = servePath[:len(servePath)-1]
+	}
+	fmt.Println("Serving directory: " + servePath)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -45,11 +57,12 @@ func handleConnection(conn net.Conn) {
 	}
 	if method == "GET" {
 		rw.WriteString("HTTP/1.1 200 OK\r\n")
+		data, _ := ioutil.ReadFile(servePath + uri)
+		contentLength := len(data)
 		rw.WriteString("Content-Type: text/html\r\n")
-		rw.WriteString("Content-Length: 151\r\n")
+		rw.WriteString("Content-Length: " + string(contentLength) + "\r\n")
 		rw.WriteString("\r\n")
-		bytes, _ := ioutil.ReadFile("/Users/awmleer/Project/go/src/github.com/awmleer/gow/test/index.html")
-		rw.Write(bytes)
+		rw.Write(data)
 		rw.Flush()
 	}
 	conn.Close()
